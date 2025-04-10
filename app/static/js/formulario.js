@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const response = await fetch('/api/usuarios', {  // ← Ruta exacta
+            const response = await fetch('api/usuarios', {  // ← Ruta exacta
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

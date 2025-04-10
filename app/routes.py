@@ -8,7 +8,7 @@ from app.models.usuarios import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 import re
-
+from flask import redirect, url_for, session
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if 'usuario_id' in session:
@@ -27,6 +27,17 @@ def index():
             flash('Correo o contraseña incorrectos', 'error')
     
     return render_template('login.html')
+
+@app.route('/dashboard')
+def dashboard():
+    if 'usuario_id' not in session:
+        return redirect('/')
+    return render_template('dashboard.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))  # ← Corregido: usa 'index' en lugar de 'login.html'
 
 @app.route('/api/usuarios', methods=['POST'])
 def api_registrar_usuario():
@@ -67,8 +78,3 @@ def api_registrar_usuario():
         current_app.logger.error(f'Error en API registro: {str(e)}')
         return jsonify({'error': 'Error al registrar el usuario'}), 500
 
-@app.route('/dashboard')
-def dashboard():
-    if 'usuario_id' not in session:
-        return redirect('/')
-    return render_template('dashboard.html')
