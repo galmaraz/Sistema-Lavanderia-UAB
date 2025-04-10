@@ -1,95 +1,149 @@
-// Ejemplo de manejo para evitar 'undefined' en `getWithTTL`
-
-document.addEventListener('DOMContentLoaded', function () {
-    // Suponiendo que el objeto `storage` es lo que tiene el método getWithTTL
-    let storage;
-
-    // Asegurarse de que 'storage' no sea undefined
-    if (typeof storage !== 'undefined' && storage && typeof storage.getWithTTL === 'function') {
-        // Si storage y getWithTTL existen, podemos llamar al método de forma segura
-        const prompt = storage.getWithTTL('someKey');
-        console.log(prompt);
-    } else {
-        console.error("El objeto 'storage' o su método 'getWithTTL' no están definidos correctamente.");
-    }
-
-    const formulario = document.getElementById('formulario');
-    const errorCorreo = document.getElementById('error-correo');
-    const errorContrasena = document.getElementById('error-contrasena');
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('formulario');
     const mensaje = document.getElementById('mensaje');
+    const correoInput = document.getElementById('correo');
+    const contrasenaInput = document.getElementById('contrasena');
 
-    formulario.addEventListener('submit', async function (e) {
+    // Validación en tiempo real
+    correoInput.addEventListener('input', validarCorreo);
+    contrasenaInput.addEventListener('input', validarContrasena);
+
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Limpiar mensajes de error previos
-        errorCorreo.classList.add('hidden');
-        errorContrasena.classList.add('hidden');
-        mensaje.classList.add('hidden');
-        
-        // Obtener valores del formulario
         const nombre = document.getElementById('nombre').value.trim();
-        const correo = document.getElementById('correo').value.trim();
-        const contrasena = document.getElementById('contrasena').value.trim();
+        const correo = correoInput.value.trim();
+        const contrasena = contrasenaInput.value;
         const tipo_usuario = document.getElementById('tipo_usuario').value;
 
-        // Validaciones
-        if (!correo.endsWith('@uab.edu.bo')) {
-            errorCorreo.textContent = "Solo se permiten correos institucionales @uab.edu.bo";
-            errorCorreo.classList.remove('hidden');
-            return;
-        }
-        
-        if (contrasena.length < 8) {
-            errorContrasena.textContent = "La contraseña debe tener al menos 8 caracteres";
-            errorContrasena.classList.remove('hidden');
+        // Validación frontend
+        if (!validarFormulario()) {
             return;
         }
 
-        // Crear objeto con los datos del formulario
-        const data = {
-            nombre: nombre,
-            correo: correo,
-            contrasena: contrasena,
-            tipo_usuario: tipo_usuario
+        const datos = { 
+            nombre, 
+            correo, 
+            contrasena, 
+            tipo_usuario 
         };
 
-        // Enviar los datos al backend usando Fetch
         try {
-            const response = await fetch('/usuarios', {
+            const response = await fetch('/api/usuarios', {  // ← Ruta exacta
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify({
+                    nombre: nombre,
+                    correo: correo,
+                    contrasena: contrasena,
+                    tipo_usuario: tipo_usuario
+                })
             });
-
-            const result = await response.json();
-
-            // Si la respuesta es exitosa (código 200-299)
-            if (response.ok) {
-                // Mostrar mensaje de éxito
-                mensaje.textContent = result.mensaje || "Usuario creado exitosamente.";
-                mensaje.classList.remove('hidden', 'text-red-500');
-                mensaje.classList.add('text-green-500');
-                formulario.reset();
-
-                // Redirigir a la página de login después de 2 segundos
-                setTimeout(function() {
-                    window.location.href = '/';  // Redirige al login
-                }, 2000);  // 2 segundos de espera antes de redirigir
-
-            } else {
-                // Mostrar mensaje de error (si no es exitoso)
-                mensaje.textContent = result.error || "Hubo un error al procesar el formulario.";
-                mensaje.classList.remove('hidden', 'text-green-500');
-                mensaje.classList.add('text-red-500');
+        
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Error del servidor');
             }
-
+        
+            const data = await response.json();
+            console.log('Éxito:', data);
         } catch (error) {
-            console.error(error);
-            mensaje.textContent = "Error al conectar con el servidor.";
-            mensaje.classList.remove('hidden', 'text-green-500');
-            mensaje.classList.add('text-red-500');
+            console.error('Error:', error);
         }
     });
+
+    function validarFormulario() {
+        let isValid = true;
+        
+        // Validar nombre
+        const nombre = document.getElementById('nombre').value.trim();
+        if (!nombre) {
+            mostrarError('nombre-error', 'El nombre es requerido');
+            isValid = false;
+        } else {
+            ocultarError('nombre-error');
+        }
+        
+        // Validar correo
+        if (!validarCorreo()) {
+            isValid = false;
+        }
+        
+        // Validar contraseña
+        if (!validarContrasena()) {
+            isValid = false;
+        }
+        
+        // Validar tipo de usuario
+        const tipoUsuario = document.getElementById('tipo_usuario').value;
+        if (!tipoUsuario) {
+            mostrarError('tipo-error', 'Seleccione un tipo de usuario');
+            isValid = false;
+        } else {
+            ocultarError('tipo-error');
+        }
+        
+        return isValid;
+    }
+    
+    function validarCorreo() {
+        const correo = correoInput.value.trim();
+        const correoPattern = /^[a-zA-Z0-9._%+-]+@uab\.edu\.bo$/;
+        
+        if (!correo) {
+            mostrarError('correo-error', 'El correo es requerido');
+            return false;
+        }
+        
+        if (!correoPattern.test(correo)) {
+            mostrarError('correo-error', 'Solo se permiten correos institucionales @uab.edu.bo');
+            return false;
+        }
+        
+        ocultarError('correo-error');
+        return true;
+    }
+    
+    function validarContrasena() {
+        const contrasena = contrasenaInput.value;
+        const contrasenaPattern = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+        
+        if (!contrasena) {
+            mostrarError('contrasena-error', 'La contraseña es requerida');
+            return false;
+        }
+        
+        if (!contrasenaPattern.test(contrasena)) {
+            mostrarError('contrasena-error', 'La contraseña debe tener al menos 8 caracteres, una mayúscula y un número');
+            return false;
+        }
+        
+        ocultarError('contrasena-error');
+        return true;
+    }
+    
+    function mostrarError(elementId, message) {
+        const element = document.getElementById(elementId);
+        element.textContent = message;
+        element.classList.remove('hidden');
+    }
+
+    function ocultarError(elementId) {
+        const element = document.getElementById(elementId);
+        element.classList.add('hidden');
+    }
+
+    function mostrarMensaje(texto, tipo) {
+        mensaje.textContent = texto;
+        mensaje.className = tipo === 'exito' ? 'text-green-600' : 'text-red-600';
+        mensaje.classList.remove('hidden');
+        
+        // Ocultar después de 5 segundos
+        setTimeout(() => {
+            mensaje.classList.add('hidden');
+        }, 5000);
+    }
 });

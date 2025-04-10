@@ -1,51 +1,84 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulario de Registro</title>
-
+    <title>Registro de Usuario - Lavandería UAB</title>
+    <script src="{{ url_for('static', filename='js/formulario.js') }}"></script>
 </head>
-<body class="bg-gray-100 flex justify-center items-center h-screen">
+<body class="bg-gray-100">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-4 right-4 space-y-2">
+                {% for category, message in messages %}
+                    <div class="px-4 py-2 rounded-md shadow-md 
+                                {% if category == 'success' %}bg-green-100 text-green-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
-    <div class="w-full max-w-md bg-white p-8 rounded shadow-lg">
-        <h2 class="text-2xl font-bold mb-4 text-center">Crear Usuario</h2>
-        <form id="formulario" class="space-y-4">
-            <div>
-                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
-                <input type="text" id="nombre" name="nombre" class="w-full p-2 border border-gray-300 rounded" required>
-            </div>
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+            <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Registro de Usuario</h1>
             
-            <div>
-                <label for="correo" class="block text-sm font-medium text-gray-700">Correo Institucional</label>
-                <input type="email" id="correo" name="correo" class="w-full p-2 border border-gray-300 rounded" required>
-                <span id="error-correo" class="text-red-500 text-sm hidden"></span>
-            </div>
+            <form id="formulario" method="POST" action="/registrar" class="space-y-4">
+                <!-- Nombre -->
+                <div>
+                    <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre Completo</label>
+                    <input type="text" id="nombre" name="nombre" 
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           required>
+                    <p id="nombre-error" class="mt-1 text-sm text-red-600 hidden"></p>
+                </div>
+                
+                <!-- Correo -->
+                <div>
+                    <label for="correo" class="block text-sm font-medium text-gray-700">Correo Institucional</label>
+                    <input type="email" id="correo" name="correo" 
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           required>
+                    <p id="correo-error" class="mt-1 text-sm text-red-600 hidden">Solo se permiten correos institucionales @uab.edu.bo</p>
+                </div>
+                
+                <!-- Contraseña -->
+                <div>
+                    <label for="contrasena" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                    <input type="password" id="contrasena" name="contrasena" 
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           required>
+                    <p id="contrasena-error" class="mt-1 text-sm text-red-600 hidden">La contraseña debe tener al menos 8 caracteres, una mayúscula y un número</p>
+                </div>
+                
+                <!-- Tipo de Usuario -->
+                <div>
+                    <label for="tipo_usuario" class="block text-sm font-medium text-gray-700">Tipo de Usuario</label>
+                    <select id="tipo_usuario" name="tipo_usuario" 
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            required>
+                        <option value="" disabled selected>Seleccione un tipo</option>
+                        <option value="administrador">Administrador</option>
+                        <option value="estudiante interno">Estudiante Interno</option>
+                    </select>
+                    <p id="tipo-error" class="mt-1 text-sm text-red-600 hidden"></p>
+                </div>
+                
+                <!-- Botón de envío -->
+                <div>
+                    <button type="submit" 
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Registrar
+                    </button>
+                </div>
+            </form>
             
-            <div>
-                <label for="contrasena" class="block text-sm font-medium text-gray-700">Contraseña</label>
-                <input type="password" id="contrasena" name="contrasena" class="w-full p-2 border border-gray-300 rounded" required>
-                <span id="error-contrasena" class="text-red-500 text-sm hidden"></span>
+            <div class="mt-4 text-center">
+                <a href="/" class="text-blue-600 hover:text-blue-800">¿Ya tienes cuenta? Inicia sesión</a>
             </div>
-            
-            <div>
-                <label for="tipo_usuario" class="block text-sm font-medium text-gray-700">Tipo de Usuario</label>
-                <select id="tipo_usuario" name="tipo_usuario" class="w-full p-2 border border-gray-300 rounded" required>
-                    <option value="">Seleccionar...</option>
-                    <option value="administrador">Administrador</option>
-                    <option value="estudiante interno">Estudiante Interno</option>
-                </select>
-            </div>
-            
-            <div class="flex justify-center">
-                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Crear Usuario</button>
-            </div>
-        </form>
-
-        <div id="mensaje" class="mt-4 text-center text-sm text-gray-600 hidden"></div>
+        </div>
     </div>
-
-    <script src="../static/js/formulario.js"></script>
 </body>
 </html>
